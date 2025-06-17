@@ -118,7 +118,7 @@ export default function App() {
   }, [images])
 
   const [overlayVisible, setOverlayVisible] = useState(true)
-  const overlayTimer = useRef<number>()
+  const overlayTimer = useRef<number | undefined>(undefined)
   // show overlay; if initial, duration scales to text length, else fixed
   const showOverlay = (initial: boolean = false) => {
     setOverlayVisible(true)
