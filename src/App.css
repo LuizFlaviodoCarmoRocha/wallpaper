@@ -57,8 +57,8 @@
 .overlay .explanation {
   margin-top: 0.5rem;
   font-size: 0.95rem;
-  max-height: 8rem;
-  overflow: auto;
+  max-height: 50vh;
+  overflow: hidden;
 }
 
 /* controls in the top-right: full-screen toggle and download */
