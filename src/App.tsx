@@ -18,11 +18,15 @@ interface ImageData {
 }
 
 const TRANSITION_STYLES = ['fade', 'slide', 'zoom', 'flip'] as const
+type TransitionStyle = (typeof TRANSITION_STYLES)[number]
+type TransitionMode = 'sequential' | 'random' | 'manual'
 
 export default function App() {
   const [images, setImages] = useState<ImageData[]>([])
   const [currentIdx, setCurrentIdx] = useState(0)
   const [styleIdx, setStyleIdx] = useState(0)
+  const [transitionMode, setTransitionMode] = useState<TransitionMode>('sequential')
+  const [manualStyle, setManualStyle] = useState<TransitionStyle>(TRANSITION_STYLES[0])
 
   const loadImages = async () => {
     try {
