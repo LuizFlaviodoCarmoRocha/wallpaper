@@ -98,9 +98,21 @@ export default function App() {
   useEffect(() => {
     if (images.length === 0) return
     resetOverlayTimer()
-    // cycle through transition styles on each image change
-    setStyleIdx((prev) => (prev + 1) % TRANSITION_STYLES.length)
-  }, [currentIdx, images])
+    // pick transition style based on mode: sequential, random, or manual selection
+    switch (transitionMode) {
+      case 'sequential':
+        setStyleIdx((prev) => (prev + 1) % TRANSITION_STYLES.length)
+        break
+      case 'random':
+        setStyleIdx(
+          Math.floor(Math.random() * TRANSITION_STYLES.length)
+        )
+        break
+      case 'manual':
+        setStyleIdx(TRANSITION_STYLES.indexOf(manualStyle))
+        break
+    }
+  }, [currentIdx, images, transitionMode, manualStyle])
 
   // persist last viewed image so we can restore on reload
   useEffect(() => {
@@ -152,6 +164,30 @@ export default function App() {
     <div className={`carousel ${TRANSITION_STYLES[styleIdx]}`} ref={carouselRef} onMouseMove={resetOverlayTimer}>
       {images.length > 0 && (
         <div className={`controls${overlayVisible ? ' visible' : ''}`}> 
+          <select
+            className="transition-select"
+            value={
+              transitionMode === 'manual' ? manualStyle : transitionMode
+            }
+            onChange={(e) => {
+              const v = e.target.value as string
+              if (v === 'sequential' || v === 'random') {
+                setTransitionMode(v)
+              } else {
+                setTransitionMode('manual')
+                setManualStyle(v as TransitionStyle)
+              }
+            }}
+            title="Transition style/mode"
+          >
+            <option value="sequential">sequential</option>
+            <option value="random">random</option>
+            {TRANSITION_STYLES.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </select>
           <button
             onClick={toggleFullScreen}
             title={isFull ? 'Exit full screen' : 'Full screen'}

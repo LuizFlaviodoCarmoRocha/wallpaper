@@ -80,7 +80,8 @@
 }
 /* uniform styling for control icons (fullscreen, download, info) */
 .controls button,
-.controls .download-btn {
+.controls .download-btn,
+.controls .transition-select {
   background: rgba(0, 0, 0, 0.7);
   color: #fff;
   border: none;
@@ -94,8 +95,9 @@
   -webkit-appearance: none;
   -moz-appearance: none;
 }
-.controls button:hover,
-.controls .download-btn:hover {
+ .controls button:hover,
+ .controls .download-btn:hover,
+ .controls .transition-select:hover {
   background: rgba(0, 0, 0, 0.85);
 }
 
@@ -109,6 +111,17 @@
   border-radius: 0.3rem;
   font-size: 0.9rem;
   line-height: 1;
+}
+
+.controls .transition-select {
+  color: #fff;
+  border: none;
+  padding: 0.4rem 0.6rem;
+  border-radius: 0.3rem;
+  font-size: 0.9rem;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
 }
 
 /* --- Transition styles --- */
