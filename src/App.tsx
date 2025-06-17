@@ -94,8 +94,38 @@ export default function App() {
     resetOverlayTimer()
   }, [currentIdx, images])
 
+  // full-screen support
+  const carouselRef = useRef<HTMLDivElement>(null)
+  const [isFull, setIsFull] = useState(false)
+  const toggleFullScreen = () => {
+    if (!document.fullscreenElement) {
+      carouselRef.current?.requestFullscreen().catch(() => {})
+    } else {
+      document.exitFullscreen().catch(() => {})
+    }
+  }
+  useEffect(() => {
+    const onChange = () => setIsFull(!!document.fullscreenElement)
+    document.addEventListener('fullscreenchange', onChange)
+    return () => document.removeEventListener('fullscreenchange', onChange)
+  }, [])
+
   return (
-    <div className="carousel" onMouseMove={resetOverlayTimer}>
+    <div className="carousel" ref={carouselRef} onMouseMove={resetOverlayTimer}>
+      {images.length > 0 && (
+        <div className="controls">
+          <button onClick={toggleFullScreen}>
+            {isFull ? 'Exit Full Screen' : 'Full Screen'}
+          </button>
+          <a
+            href={images[currentIdx].url}
+            download={`APOD-${images[currentIdx].date}`}
+            className="download-btn"
+          >
+            Download
+          </a>
+        </div>
+      )}
       {images.map((img, idx) => (
         <img
           key={img.url}
