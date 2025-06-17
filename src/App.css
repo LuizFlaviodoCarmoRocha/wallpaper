@@ -7,8 +7,6 @@
 
 .carousel {
   position: relative;
-  /* HMR test: highlight carousel boundary */
-  border: 2px solid magenta;
   width: 100vw;
   height: 100vh;
   background: #000;
