@@ -76,8 +76,11 @@
 .controls {
   position: absolute;
   top: 1rem;
+  left: 1rem;
   right: 1rem;
   display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 0.5rem;
   opacity: 0;
   transition: opacity 0.5s ease-in-out;
@@ -91,6 +94,7 @@
 /* uniform styling for control icons, dropdowns */
 .controls button,
 .controls .download-btn,
+.controls .info-btn,
 .controls .transition-select,
 .controls .duration-select {
   background: rgba(0, 0, 0, 0.7);
@@ -106,10 +110,11 @@
   -webkit-appearance: none;
   -moz-appearance: none;
 }
- .controls button:hover,
- .controls .download-btn:hover,
- .controls .transition-select:hover,
- .controls .duration-select:hover {
+.controls button:hover,
+.controls .download-btn:hover,
+.controls .info-btn:hover,
+.controls .transition-select:hover,
+.controls .duration-select:hover {
   background: rgba(0, 0, 0, 0.85);
 }
 
@@ -119,6 +124,76 @@
   width: 1em;
   height: 1em;
   fill: currentColor;
+}
+
+/* info button styling: transparent background, stylized 'i' */
+.controls .info-btn {
+  background: transparent;
+  color: #fff;
+  font-weight: bold;
+}
+.controls .info-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+/* active highlight for menu button (part of controls) */
+.controls .menu-btn.active {
+  color: #ffeb3b;
+}
+.controls .menu-btn.active:hover {
+  color: #fff176;
+}
+
+/* menu toggle active state (same highlight as ambient) */
+/* menu toggle button (hamburger) */
+/* menu thumbnail in button */
+
+/* custom menu dropdown (alternate controls) */
+.menu-dropdown {
+  position: absolute;
+  top: 3rem;
+  left: 1rem;
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  border-radius: 0.3rem;
+  padding: 0.5rem;
+  z-index: 4;
+  min-width: 8rem;
+}
+.menu-dropdown .menu-section {
+  margin-bottom: 0.5rem;
+}
+.menu-dropdown .menu-title {
+  font-weight: bold;
+  margin-bottom: 0.25rem;
+}
+.menu-dropdown .menu-item {
+  display: block;
+  width: 100%;
+  background: transparent;
+  border: none;
+  text-align: left;
+  padding: 0.3rem 0.5rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #fff;
+}
+.menu-dropdown .menu-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+.menu-dropdown .menu-item.active {
+  font-weight: bold;
+}
+/* indicate selected item with a checkmark */
+.menu-dropdown .menu-item.active::before {
+  content: '✔ ';
+}
+
+/* ambient toggle active state: subtle foreground highlight */
+.controls .ambient-btn.active {
+  color: #ffeb3b;
+}
+.controls .ambient-btn.active:hover {
+  color: #fff176;
 }
 
 
@@ -160,3 +235,18 @@
   transform: rotateY(0deg);
   opacity: 1;
 }
+
+/* experimental ambient pan/zoom movement */
+.carousel.ambient .carousel-image.visible {
+  animation: ambient-pan 18.75s ease-in-out infinite alternate;
+}
+
+@keyframes ambient-pan {
+  0% {
+    transform: scale(1) translate(0%, 0%);
+  }
+  100% {
+    transform: scale(1.1) translate(-5%, -5%);
+  }
+}
+
