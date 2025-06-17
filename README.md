@@ -43,7 +43,11 @@ This project is configured for automatic deployment to AWS S3 using GitHub Actio
 3. **Automatic Deployment**: 
    - Pushes to `main` branch automatically trigger deployment
    - The workflow builds the React app and syncs the `dist/` folder to S3
-   - Website URL: http://rjmette-wallpaper.s3-website-us-east-1.amazonaws.com
+   - Invalidates CloudFront cache for immediate updates
+   - Website URLs:
+     - Primary: https://wallpaper.rbios.net
+     - CloudFront: https://dfag5wjhwtow6.cloudfront.net
+     - S3 Direct: http://rjmette-wallpaper.s3-website-us-east-1.amazonaws.com
 
 ### Manual Deployment
 
