@@ -214,9 +214,15 @@ export default function App() {
             max={180}
             step={5}
             value={rotationSec}
+            list="speed-ticks"
             onChange={(e) => setRotationSec(Number(e.target.value))}
             title={`Display duration: ${rotationSec}s`}
           />
+          <datalist id="speed-ticks">
+            {Array.from({ length: 180 / 15 }, (_, i) => (i + 1) * 15).map((sec) => (
+              <option key={sec} value={sec} />
+            ))}
+          </datalist>
           <select
             className="transition-select"
             value={
