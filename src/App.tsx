@@ -1,11 +1,11 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import './App.css'
 
 const API_URL = 'https://api.nasa.gov/planetary/apod'
 const API_KEY = 'DEMO_KEY'
-const IMAGE_COUNT = 10
+const IMAGE_COUNT = 50
 const ROTATION_INTERVAL_MS = 60 * 1000
-const FETCH_INTERVAL_MS = 60 * 60 * 1000
+const FETCH_INTERVAL_MS = 20 * 60 * 1000
 const STORAGE_KEY = 'nasa-images'
 const STORAGE_TIME_KEY = 'nasa-images-timestamp'
 const LAST_IMAGE_KEY = 'nasa-last-image-date'
@@ -28,7 +28,7 @@ export default function App() {
   const [transitionMode, setTransitionMode] = useState<TransitionMode>('sequential')
   const [manualStyle, setManualStyle] = useState<TransitionStyle>(TRANSITION_STYLES[0])
 
-  const loadImages = async () => {
+  const loadImages = useCallback(async () => {
     try {
       const cached = localStorage.getItem(STORAGE_KEY)
       const ts = localStorage.getItem(STORAGE_TIME_KEY)
@@ -74,21 +74,41 @@ export default function App() {
     } catch (err) {
       console.error('Failed to fetch images', err)
     }
-  }
+  }, [])
 
   useEffect(() => {
     loadImages()
     const fetchInt = setInterval(loadImages, FETCH_INTERVAL_MS)
     return () => clearInterval(fetchInt)
-  }, [])
+  }, [loadImages])
 
+  // automatically rotate through unviewed images; when all have been shown, fetch a new batch
+  const seenRef = useRef<Set<string>>(new Set())
   useEffect(() => {
     if (images.length === 0) return
-    const rotateInt = setInterval(
-      () => setCurrentIdx((idx) => (idx + 1) % images.length),
-      ROTATION_INTERVAL_MS
-    )
+    const rotate = () => {
+      setCurrentIdx((prevIdx) => {
+        seenRef.current.add(images[prevIdx].date)
+        // find next unviewed image
+        for (let i = 0; i < images.length; i++) {
+          const idx = (prevIdx + 1 + i) % images.length
+          if (!seenRef.current.has(images[idx].date)) {
+            return idx
+          }
+        }
+        // all seen → clear and fetch a new batch
+        seenRef.current.clear()
+        loadImages()
+        return 0
+      })
+    }
+    const rotateInt = setInterval(rotate, ROTATION_INTERVAL_MS)
     return () => clearInterval(rotateInt)
+  }, [images, loadImages])
+
+  // when we get new images, reset the seen set
+  useEffect(() => {
+    seenRef.current.clear()
   }, [images])
 
   const [overlayVisible, setOverlayVisible] = useState(true)
