@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import './App.css'
 
 const API_URL = 'https://api.nasa.gov/planetary/apod'
@@ -9,8 +9,15 @@ const FETCH_INTERVAL_MS = 60 * 60 * 1000
 const STORAGE_KEY = 'nasa-images'
 const STORAGE_TIME_KEY = 'nasa-images-timestamp'
 
+interface ImageData {
+  url: string
+  title: string
+  date: string
+  explanation: string
+}
+
 export default function App() {
-  const [images, setImages] = useState<string[]>([])
+  const [images, setImages] = useState<ImageData[]>([])
   const [currentIdx, setCurrentIdx] = useState(0)
 
   const loadImages = async () => {
@@ -25,16 +32,20 @@ export default function App() {
         `${API_URL}?api_key=${API_KEY}&count=${IMAGE_COUNT}`
       )
       const data = await res.json()
-      const urls: string[] = Array.isArray(data)
-        ? data.map((item: any) => item.url).filter(Boolean)
+      const items: ImageData[] = Array.isArray(data)
+        ? data
+            .filter((item: any) => item.url)
+            .map((item: any) => ({
+              url: item.url,
+              title: item.title || '',
+              date: item.date || '',
+              explanation: item.explanation || '',
+            }))
         : []
-      if (urls.length > 0) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(urls))
-        localStorage.setItem(
-          STORAGE_TIME_KEY,
-          Date.now().toString()
-        )
-        setImages(urls)
+      if (items.length > 0) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(items))
+        localStorage.setItem(STORAGE_TIME_KEY, Date.now().toString())
+        setImages(items)
         setCurrentIdx(0)
       }
     } catch (err) {
@@ -50,22 +61,47 @@ export default function App() {
 
   useEffect(() => {
     if (images.length === 0) return
-    const rotateInt = setInterval(() => {
-      setCurrentIdx((idx) => (idx + 1) % images.length)
-    }, ROTATION_INTERVAL_MS)
+    const rotateInt = setInterval(
+      () => setCurrentIdx((idx) => (idx + 1) % images.length),
+      ROTATION_INTERVAL_MS
+    )
     return () => clearInterval(rotateInt)
   }, [images])
 
+  // overlay visibility on image change or user mouse movement
+  const [overlayVisible, setOverlayVisible] = useState(true)
+  const overlayTimer = useRef<number | undefined>(undefined)
+  const resetOverlayTimer = () => {
+    setOverlayVisible(true)
+    if (overlayTimer.current) clearTimeout(overlayTimer.current)
+    overlayTimer.current = window.setTimeout(
+      () => setOverlayVisible(false),
+      5000
+    )
+  }
+
+  useEffect(() => {
+    if (images.length === 0) return
+    resetOverlayTimer()
+  }, [currentIdx, images])
+
   return (
-    <div className="carousel">
-      {images.map((url, idx) => (
+    <div className="carousel" onMouseMove={resetOverlayTimer}>
+      {images.map((img, idx) => (
         <img
-          key={url}
-          src={url}
+          key={img.url}
+          src={img.url}
           className={`carousel-image${idx === currentIdx ? ' visible' : ''}`}
-          alt="NASA APOD"
+          alt={img.title || 'NASA APOD'}
         />
       ))}
+      {images.length > 0 && (
+        <div className={`overlay${overlayVisible ? ' visible' : ''}`}> 
+          <h2>{images[currentIdx].title}</h2>
+          <p className="date">{images[currentIdx].date}</p>
+          <p className="explanation">{images[currentIdx].explanation}</p>
+        </div>
+      )}
     </div>
   )
 }
