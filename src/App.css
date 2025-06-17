@@ -60,12 +60,20 @@
 }
 
 /* controls in the top-right: full-screen toggle and download */
+/* control buttons: fullscreen, download, info */
 .controls {
   position: absolute;
   top: 1rem;
   right: 1rem;
   display: flex;
   gap: 0.5rem;
+  opacity: 0;
+  transition: opacity 0.5s ease-in-out;
+  pointer-events: none;
+}
+.controls.visible {
+  opacity: 1;
+  pointer-events: auto;
 }
 .controls button,
 .controls .download-btn {
@@ -76,7 +84,8 @@
   border-radius: 0.3rem;
   cursor: pointer;
   text-decoration: none;
-  font-size: 0.9rem;
+  font-size: 1.1rem;
+  line-height: 1;
 }
 .controls button:hover,
 .controls .download-btn:hover {

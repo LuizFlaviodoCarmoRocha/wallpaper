@@ -110,19 +110,37 @@ export default function App() {
     return () => document.removeEventListener('fullscreenchange', onChange)
   }, [])
 
+  // derive external APOD page link from the date (YYYY-MM-DD → apYYMMDD.html)
+  const pageLink = images[currentIdx]
+    ? `https://apod.nasa.gov/apod/ap${images[currentIdx].date.replace(/-/g, '').slice(2)}.html`
+    : ''
+
   return (
     <div className="carousel" ref={carouselRef} onMouseMove={resetOverlayTimer}>
       {images.length > 0 && (
-        <div className="controls">
-          <button onClick={toggleFullScreen}>
-            {isFull ? 'Exit Full Screen' : 'Full Screen'}
+        <div className={`controls${overlayVisible ? ' visible' : ''}`}> 
+          <button
+            onClick={toggleFullScreen}
+            title={isFull ? 'Exit full screen' : 'Full screen'}
+          >
+            ⛶
           </button>
           <a
             href={images[currentIdx].url}
             download={`APOD-${images[currentIdx].date}`}
             className="download-btn"
+            title="Download image"
           >
-            Download
+            ⬇️
+          </a>
+          <a
+            href={pageLink}
+            target="_blank"
+            rel="noopener"
+            className="download-btn"
+            title="View on NASA APOD"
+          >
+            ℹ️
           </a>
         </div>
       )}
