@@ -48,13 +48,18 @@
   opacity: 1;
 }
 
-.overlay .date {
+/* normalize heading margins inside the overlay */
+.overlay h2 {
+  margin: 0 0 0.5rem;
+}
+
+  .overlay .date {
   font-size: 0.9rem;
   opacity: 0.8;
   margin-top: -0.5rem;
 }
 
-.overlay .explanation {
+  .overlay .explanation {
   margin-top: 0.5rem;
   font-size: 0.95rem;
   max-height: 50vh;
