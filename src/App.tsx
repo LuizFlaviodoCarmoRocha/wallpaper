@@ -24,9 +24,21 @@ export default function App() {
     try {
       const cached = localStorage.getItem(STORAGE_KEY)
       const ts = localStorage.getItem(STORAGE_TIME_KEY)
-      if (cached && ts && Date.now() - parseInt(ts, 10) < FETCH_INTERVAL_MS) {
-        setImages(JSON.parse(cached))
-        return
+      if (cached && ts && Date.now() - Number(ts) < FETCH_INTERVAL_MS) {
+        try {
+          const parsed = JSON.parse(cached)
+          if (
+            Array.isArray(parsed) &&
+            parsed.length > 0 &&
+            typeof parsed[0] === 'object' &&
+            'url' in parsed[0]
+          ) {
+            setImages(parsed)
+            return
+          }
+        } catch {
+          // ignore malformed cache
+        }
       }
       const res = await fetch(
         `${API_URL}?api_key=${API_KEY}&count=${IMAGE_COUNT}`
