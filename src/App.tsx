@@ -94,7 +94,7 @@ export default function App() {
     resetOverlayTimer()
   }, [currentIdx, images])
 
-  // full-screen support
+  
   const carouselRef = useRef<HTMLDivElement>(null)
   const [isFull, setIsFull] = useState(false)
   const toggleFullScreen = () => {
@@ -110,7 +110,6 @@ export default function App() {
     return () => document.removeEventListener('fullscreenchange', onChange)
   }, [])
 
-  // derive external APOD page link from the date (YYYY-MM-DD → apYYMMDD.html)
   const pageLink = images[currentIdx]
     ? `https://apod.nasa.gov/apod/ap${images[currentIdx].date.replace(/-/g, '').slice(2)}.html`
     : ''
