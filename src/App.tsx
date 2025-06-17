@@ -8,6 +8,7 @@ const ROTATION_INTERVAL_MS = 60 * 1000
 const FETCH_INTERVAL_MS = 60 * 60 * 1000
 const STORAGE_KEY = 'nasa-images'
 const STORAGE_TIME_KEY = 'nasa-images-timestamp'
+const LAST_IMAGE_KEY = 'nasa-last-image-date'
 
 interface ImageData {
   url: string
@@ -56,7 +57,12 @@ export default function App() {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(items))
         localStorage.setItem(STORAGE_TIME_KEY, Date.now().toString())
         setImages(items)
-        setCurrentIdx(0)
+        const savedDate = localStorage.getItem(LAST_IMAGE_KEY)
+        const initialIdx =
+          savedDate != null
+            ? items.findIndex((img) => img.date === savedDate)
+            : -1
+        setCurrentIdx(initialIdx >= 0 ? initialIdx : 0)
       }
     } catch (err) {
       console.error('Failed to fetch images', err)
@@ -81,7 +87,6 @@ export default function App() {
   const [overlayVisible, setOverlayVisible] = useState(true)
   const overlayTimer = useRef<number | undefined>(undefined)
   const resetOverlayTimer = () => {
-    console.debug('[HMR DEBUG] resetOverlayTimer called')
     setOverlayVisible(true)
     if (overlayTimer.current) clearTimeout(overlayTimer.current)
     overlayTimer.current = window.setTimeout(
@@ -95,9 +100,11 @@ export default function App() {
     resetOverlayTimer()
   }, [currentIdx, images])
 
+  // persist last viewed image so we can restore on reload
   useEffect(() => {
-    console.debug('[HMR DEBUG] overlayVisible=', overlayVisible)
-  }, [overlayVisible])
+    if (images.length === 0) return
+    localStorage.setItem(LAST_IMAGE_KEY, images[currentIdx].date)
+  }, [currentIdx, images])
 
   
   const carouselRef = useRef<HTMLDivElement>(null)
@@ -115,6 +122,26 @@ export default function App() {
     return () => document.removeEventListener('fullscreenchange', onChange)
   }, [])
 
+  // download current image via blob to support cross-origin
+  const downloadCurrentImage = async () => {
+    const img = images[currentIdx]
+    if (!img) return
+    try {
+      const res = await fetch(img.url)
+      const blob = await res.blob()
+      const blobUrl = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = blobUrl
+      a.download = `APOD-${img.date}`
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(blobUrl)
+    } catch (err) {
+      console.error('Download failed', err)
+    }
+  }
+
   const pageLink = images[currentIdx]
     ? `https://apod.nasa.gov/apod/ap${images[currentIdx].date.replace(/-/g, '').slice(2)}.html`
     : ''
@@ -129,18 +156,17 @@ export default function App() {
           >
             ⛶
           </button>
-          <a
-            href={images[currentIdx].url}
-            download={`APOD-${images[currentIdx].date}`}
+          <button
+            onClick={downloadCurrentImage}
             className="download-btn"
             title="Download image"
           >
             ⬇️
-          </a>
+          </button>
           <a
             href={pageLink}
             target="_blank"
-            rel="noopener"
+            rel="noopener noreferrer"
             className="download-btn"
             title="View on NASA APOD"
           >
