@@ -159,13 +159,21 @@ aws cloudfront create-invalidation --distribution-id E3T87UCNP843YL --paths "/*"
 
 ## Contributing
 
-1. Fork the repository
+1. Fork the repository (now publicly available)
 2. Create a feature branch
 3. Make your changes
 4. Test locally with `npm run dev`
 5. Push to your branch and create a pull request
 6. Deployment happens automatically on merge to `main`
 
+### Ways to Contribute
+- 🐛 Report bugs via GitHub Issues
+- 💡 Suggest new features or improvements
+- 📝 Improve documentation
+- 🎨 Enhance the UI/UX
+- ⚡ Optimize performance
+- 🧪 Add tests
+
 ## License
 
-This project is private and proprietary.
+This project is open source and available under the MIT License. See the [LICENSE](LICENSE) file for details.
