@@ -1,6 +1,18 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import './App.css'
 
+const DownloadIcon = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path d="M5 20h14v-2H5v2zM12 2L5 9h4v6h6V9h4l-7-7z" />
+  </svg>
+)
+
+const InfoIcon = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-6h2v6zm0-8h-2V7h2v4z" />
+  </svg>
+)
+
 const API_URL = 'https://api.nasa.gov/planetary/apod'
 const API_KEY = 'DEMO_KEY'
 const IMAGE_COUNT = 50
@@ -332,7 +344,7 @@ export default function App() {
             className="download-btn"
             title="Download image"
           >
-            ⬇️
+            <DownloadIcon />
           </button>
           <a
             href={pageLink}
@@ -341,7 +353,7 @@ export default function App() {
             className="download-btn"
             title="View on NASA APOD"
           >
-            ℹ️
+            <InfoIcon />
           </a>
         </div>
       )}

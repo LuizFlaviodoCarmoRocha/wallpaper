@@ -48,6 +48,11 @@
   opacity: 1;
 }
 
+/* hide the cursor after inactivity */
+.hide-cursor, .hide-cursor * {
+  cursor: none !important;
+}
+
 /* normalize heading margins inside the overlay */
 .overlay h2 {
   margin: 0 0 0.5rem;
@@ -106,6 +111,14 @@
  .controls .transition-select:hover,
  .controls .duration-select:hover {
   background: rgba(0, 0, 0, 0.85);
+}
+
+.controls svg {
+  display: inline-block;
+  vertical-align: middle;
+  width: 1em;
+  height: 1em;
+  fill: currentColor;
 }
 
 
