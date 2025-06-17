@@ -6,8 +6,8 @@ A simple React + TypeScript + Vite application that fetches images from NASA's A
 
 ## Features
 
-- Fetches 10 random images on load and every 60 minutes
-- Rotates images every 60 seconds with smooth fade transitions
+- Fetches random images on load and refreshes periodically
+- Rotates images automatically with smooth fade transitions
 - Caches image URLs in localStorage for performance
 - Full-screen carousel display optimized for wallpaper viewing
 - Responsive design for various screen sizes
