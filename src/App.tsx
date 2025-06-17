@@ -17,9 +17,12 @@ interface ImageData {
   explanation: string
 }
 
+const TRANSITION_STYLES = ['fade', 'slide', 'zoom', 'flip'] as const
+
 export default function App() {
   const [images, setImages] = useState<ImageData[]>([])
   const [currentIdx, setCurrentIdx] = useState(0)
+  const [styleIdx, setStyleIdx] = useState(0)
 
   const loadImages = async () => {
     try {
@@ -89,15 +92,14 @@ export default function App() {
   const resetOverlayTimer = () => {
     setOverlayVisible(true)
     if (overlayTimer.current) clearTimeout(overlayTimer.current)
-    overlayTimer.current = window.setTimeout(
-      () => setOverlayVisible(false),
-      5000
-    )
+    overlayTimer.current = window.setTimeout(() => setOverlayVisible(false), 5000)
   }
 
   useEffect(() => {
     if (images.length === 0) return
     resetOverlayTimer()
+    // cycle through transition styles on each image change
+    setStyleIdx((prev) => (prev + 1) % TRANSITION_STYLES.length)
   }, [currentIdx, images])
 
   // persist last viewed image so we can restore on reload
@@ -147,7 +149,7 @@ export default function App() {
     : ''
 
   return (
-    <div className="carousel" ref={carouselRef} onMouseMove={resetOverlayTimer}>
+    <div className={`carousel ${TRANSITION_STYLES[styleIdx]}`} ref={carouselRef} onMouseMove={resetOverlayTimer}>
       {images.length > 0 && (
         <div className={`controls${overlayVisible ? ' visible' : ''}`}> 
           <button
