@@ -3,13 +3,28 @@ import './App.css'
 
 const DownloadIcon = () => (
   <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-    <path d="M5 20h14v-2H5v2zM12 2L5 9h4v6h6V9h4l-7-7z" />
+    <g transform="rotate(180 12 12)">
+      <path d="M5 20h14v-2H5v2zM12 2L5 9h4v6h6V9h4l-7-7z" />
+    </g>
   </svg>
 )
 
-const InfoIcon = () => (
+
+const AmbientIcon = () => (
   <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-6h2v6zm0-8h-2V7h2v4z" />
+    <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6a6 6 0 0 1-6 6c-3.31 0-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z" />
+  </svg>
+)
+
+const MenuIcon = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path d="M3 6h18v2H3V6zm0 5h18v2H3v-2zm0 5h18v2H3v-2z" />
+  </svg>
+)
+
+const FullscreenIcon = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path d="M3 3h6v2H5v4H3V3zm14 0v6h-2V5h-4V3h6zM3 13h2v4h4v2H3v-6zm14 8h-6v-2h4v-4h2v6z" />
   </svg>
 )
 
@@ -70,6 +85,41 @@ export default function App() {
       setCursorVisible(false)
     }, 3000)
   }
+
+  // experimental ambient movement (toggle via button or 'M' key)
+  const [ambientMovement, setAmbientMovement] = useState(true)
+  const toggleAmbient = () => setAmbientMovement((v) => !v)
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key.toLowerCase() === 'm') {
+        toggleAmbient()
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+}, [])
+
+  // hamburger menu open/close (alternate controls)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuBtnRef = useRef<HTMLButtonElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
+  const toggleMenu = () => setMenuOpen((v) => !v)
+  // close menu when clicking outside
+  useEffect(() => {
+    const onClickOutside = (e: MouseEvent) => {
+      if (menuOpen) {
+        const target = e.target as Node
+        if (
+          menuRef.current && !menuRef.current.contains(target) &&
+          menuBtnRef.current && !menuBtnRef.current.contains(target)
+        ) {
+          setMenuOpen(false)
+        }
+      }
+    }
+    window.addEventListener('mousedown', onClickOutside)
+    return () => window.removeEventListener('mousedown', onClickOutside)
+  }, [menuOpen])
 
   const loadImages = useCallback(async () => {
     try {
@@ -285,7 +335,7 @@ export default function App() {
     <div
       className={`carousel ${TRANSITION_STYLES[styleIdx]}${
         cursorVisible ? '' : ' hide-cursor'
-      }`}
+      }${ambientMovement ? ' ambient' : ''}`}
       ref={carouselRef}
       onMouseMove={() => {
         showOverlay(false)
@@ -295,66 +345,93 @@ export default function App() {
     >
       {images.length > 0 && (
         <div className={`controls${controlsVisible ? ' visible' : ''}`}> 
-          <select
-            className="duration-select"
-            value={rotationSec}
-            onChange={(e) => setRotationSec(Number(e.target.value))}
-            title={`Display duration: ${rotationSec / 60} min`}
+          <button
+            ref={menuBtnRef}
+            onClick={toggleMenu}
+            className="menu-btn"
+            title="Menu"
           >
-            {[15, 30, 60, 120, 180, 240, 300, 360, 420, 480, 540, 600].map(
-              (sec) => (
-                <option key={sec} value={sec}>
-                  {sec < 60 ? `${sec}s` : `${sec / 60}m`}
-                </option>
-              )
-            )}
-          </select>
-          <select
-            className="transition-select"
-            value={
-              transitionMode === 'manual' ? manualStyle : transitionMode
-            }
-            onChange={(e) => {
-              const v = e.target.value as string
-              if (v === 'sequential' || v === 'random') {
-                setTransitionMode(v)
-              } else {
-                setTransitionMode('manual')
-                setManualStyle(v as TransitionStyle)
-              }
-            }}
-            title="Transition style/mode"
-          >
-            <option value="sequential">sequential</option>
-            <option value="random">random</option>
-            {TRANSITION_STYLES.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
+            <MenuIcon />
+          </button>
+          <div className="right-controls">
+            <button
+              onClick={toggleAmbient}
+              className={`download-btn ambient-btn${ambientMovement ? ' active' : ''}`}
+              title={`Ambient movement: ${ambientMovement ? 'On' : 'Off'} (M)`}
+            >
+              <AmbientIcon />
+            </button>
+            <button
+              onClick={toggleFullScreen}
+              title={isFull ? 'Exit full screen' : 'Full screen'}
+            >
+              <FullscreenIcon />
+            </button>
+          </div>
+        </div>
+      )}
+      {menuOpen && (
+        <div ref={menuRef} className="menu-dropdown">
+          <div className="menu-section">
+            <div className="menu-title">Duration</div>
+            {[15, 30, 60, 120, 180, 240, 300].map((sec) => (
+              <button
+                key={sec}
+                className={`menu-item${rotationSec === sec ? ' active' : ''}`}
+                onClick={() => setRotationSec(sec)}
+              >
+                {sec < 60 ? `${sec}s` : `${sec / 60}m`}
+              </button>
             ))}
-          </select>
-          <button
-            onClick={toggleFullScreen}
-            title={isFull ? 'Exit full screen' : 'Full screen'}
-          >
-            ⛶
-          </button>
-          <button
-            onClick={downloadCurrentImage}
-            className="download-btn"
-            title="Download image"
-          >
-            <DownloadIcon />
-          </button>
-          <a
-            href={pageLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="download-btn"
-            title="View on NASA APOD"
-          >
-            <InfoIcon />
-          </a>
+          </div>
+          <div className="menu-section">
+            <div className="menu-title">Transition</div>
+            <button
+              className={`menu-item${transitionMode === 'sequential' ? ' active' : ''}`}
+              onClick={() => setTransitionMode('sequential')}
+            >
+              sequential
+            </button>
+            <button
+              className={`menu-item${transitionMode === 'random' ? ' active' : ''}`}
+              onClick={() => setTransitionMode('random')}
+            >
+              random
+            </button>
+            {TRANSITION_STYLES.map((s) => (
+              <button
+                key={s}
+                className={`menu-item${transitionMode === 'manual' && manualStyle === s ? ' active' : ''}`}
+                onClick={() => {
+                  setTransitionMode('manual')
+                  setManualStyle(s)
+                }}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+          <div className="menu-section">
+            <div className="menu-title">Actions</div>
+            <button
+              className="menu-item"
+              onClick={() => {
+                downloadCurrentImage()
+                setMenuOpen(false)
+              }}
+            >
+              Download
+            </button>
+            <button
+              className="menu-item"
+              onClick={() => {
+                window.open(pageLink, '_blank')
+                setMenuOpen(false)
+              }}
+            >
+              Get Info
+            </button>
+          </div>
         </div>
       )}
       {images.map((img, idx) => (
