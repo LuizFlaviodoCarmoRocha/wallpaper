@@ -7,6 +7,10 @@ const IMAGE_COUNT = 50
 // rotationSec controls how many seconds each image is shown (slider adjustable)
 const DEFAULT_ROTATION_SEC = 60
 const FETCH_INTERVAL_MS = 20 * 60 * 1000
+// overlay display timing (initial based on text length vs user-activated)
+const MIN_INITIAL_MS = 5000
+const MAX_INITIAL_MS = 20000
+const MS_PER_WORD = 400
 const STORAGE_KEY = 'nasa-images'
 const STORAGE_TIME_KEY = 'nasa-images-timestamp'
 const LAST_IMAGE_KEY = 'nasa-last-image-date'
@@ -114,25 +118,36 @@ export default function App() {
   }, [images])
 
   const [overlayVisible, setOverlayVisible] = useState(true)
-  const overlayTimer = useRef<number | undefined>(undefined)
-  const resetOverlayTimer = () => {
+  const overlayTimer = useRef<number>()
+  // show overlay; if initial, duration scales to text length, else fixed
+  const showOverlay = (initial = false) => {
     setOverlayVisible(true)
     if (overlayTimer.current) clearTimeout(overlayTimer.current)
-    overlayTimer.current = window.setTimeout(() => setOverlayVisible(false), 5000)
+    let timeout = initial
+      ? (() => {
+          const words = images[currentIdx]?.explanation?.split(/\s+/).length || 0
+          return Math.min(
+            MAX_INITIAL_MS,
+            Math.max(MIN_INITIAL_MS, words * MS_PER_WORD)
+          )
+        })()
+      : MIN_INITIAL_MS
+    overlayTimer.current = window.setTimeout(
+      () => setOverlayVisible(false),
+      timeout
+    )
   }
 
   useEffect(() => {
     if (images.length === 0) return
-    resetOverlayTimer()
-    // pick transition style based on mode: sequential, random, or manual selection
+    showOverlay(true)
+    // pick next transition style
     switch (transitionMode) {
       case 'sequential':
         setStyleIdx((prev) => (prev + 1) % TRANSITION_STYLES.length)
         break
       case 'random':
-        setStyleIdx(
-          Math.floor(Math.random() * TRANSITION_STYLES.length)
-        )
+        setStyleIdx(Math.floor(Math.random() * TRANSITION_STYLES.length))
         break
       case 'manual':
         setStyleIdx(TRANSITION_STYLES.indexOf(manualStyle))
@@ -168,11 +183,11 @@ export default function App() {
       if (!images.length) return
       if (e.key === 'ArrowLeft') {
         setCurrentIdx((i) => (i - 1 + images.length) % images.length)
-        resetOverlayTimer()
+        showOverlay(false)
       }
       if (e.key === 'ArrowRight') {
         setCurrentIdx((i) => (i + 1) % images.length)
-        resetOverlayTimer()
+        showOverlay(false)
       }
     }
     window.addEventListener('keydown', onKey)
@@ -204,7 +219,7 @@ export default function App() {
     : ''
 
   return (
-    <div className={`carousel ${TRANSITION_STYLES[styleIdx]}`} ref={carouselRef} onMouseMove={resetOverlayTimer}>
+    <div className={`carousel ${TRANSITION_STYLES[styleIdx]}`} ref={carouselRef} onMouseMove={() => showOverlay(false)}>
       {images.length > 0 && (
         <div className={`controls${overlayVisible ? ' visible' : ''}`}> 
           <select
