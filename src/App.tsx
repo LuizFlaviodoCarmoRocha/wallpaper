@@ -279,7 +279,7 @@ export default function App() {
       }}
     >
       {images.length > 0 && (
-        <div className={`controls${overlayVisible ? ' visible' : ''}`}> 
+        <div className={`controls${controlsVisible ? ' visible' : ''}`}> 
           <select
             className="duration-select"
             value={rotationSec}
