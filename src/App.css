@@ -99,6 +99,18 @@
   background: rgba(0, 0, 0, 0.85);
 }
 
+/* label showing current transition style */
+.transition-label {
+  display: inline-block;
+  margin: 0 0.5rem;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.5);
+  padding: 0.3rem 0.6rem;
+  border-radius: 0.3rem;
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
 /* --- Transition styles --- */
 .carousel.fade .carousel-image {
   transition: opacity 1s ease-in-out;

@@ -158,6 +158,9 @@ export default function App() {
           >
             ⛶
           </button>
+          <span className="transition-label" title="Current transition">
+            {TRANSITION_STYLES[styleIdx]}
+          </span>
           <button
             onClick={downloadCurrentImage}
             className="download-btn"
