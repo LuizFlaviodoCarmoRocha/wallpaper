@@ -14,6 +14,7 @@ const MS_PER_WORD = 400
 const STORAGE_KEY = 'nasa-images'
 const STORAGE_TIME_KEY = 'nasa-images-timestamp'
 const LAST_IMAGE_KEY = 'nasa-last-image-date'
+const FAVORITES_KEY = 'nasa-favorites'
 
 interface ImageData {
   url: string
@@ -33,6 +34,28 @@ export default function App() {
   const [styleIdx, setStyleIdx] = useState(0)
   const [transitionMode, setTransitionMode] = useState<TransitionMode>('sequential')
   const [manualStyle, setManualStyle] = useState<TransitionStyle>(TRANSITION_STYLES[0])
+  // favorite images by date
+  const [favorites, setFavorites] = useState<Set<string>>(new Set())
+  const [controlsVisible, setControlsVisible] = useState(false)
+  const controlsTimer = useRef<number | undefined>(undefined)
+  const showControls = () => {
+    setControlsVisible(true)
+    if (controlsTimer.current) clearTimeout(controlsTimer.current)
+    controlsTimer.current = window.setTimeout(
+      () => setControlsVisible(false),
+      MIN_INITIAL_MS
+    )
+  }
+  const [cursorVisible, setCursorVisible] = useState(true)
+  const cursorTimer = useRef<number | undefined>(undefined)
+  const showCursor = () => {
+    setCursorVisible(true)
+    if (cursorTimer.current) clearTimeout(cursorTimer.current)
+    cursorTimer.current = window.setTimeout(
+      () => setCursorVisible(false),
+      3000
+    )
+  }
 
   const loadImages = useCallback(async () => {
     try {
@@ -117,6 +140,21 @@ export default function App() {
     seenRef.current.clear()
   }, [images])
 
+  // load saved favorites from localStorage
+  useEffect(() => {
+    const fav = localStorage.getItem(FAVORITES_KEY)
+    if (fav) {
+      try {
+        setFavorites(new Set<string>(JSON.parse(fav)))
+      } catch {}
+    }
+  }, [])
+
+  // persist favorites to localStorage when changed
+  useEffect(() => {
+    localStorage.setItem(FAVORITES_KEY, JSON.stringify(Array.from(favorites)))
+  }, [favorites])
+
   const [overlayVisible, setOverlayVisible] = useState(true)
   const overlayTimer = useRef<number | undefined>(undefined)
   // show overlay; if initial, duration scales to text length, else fixed
@@ -141,6 +179,8 @@ export default function App() {
   useEffect(() => {
     if (images.length === 0) return
     showOverlay(true)
+    // hide controls on new image, user must mouse-move to show them
+    setControlsVisible(false)
     // pick next transition style
     switch (transitionMode) {
       case 'sequential':
@@ -177,17 +217,25 @@ export default function App() {
     return () => document.removeEventListener('fullscreenchange', onChange)
   }, [])
 
-  // allow left/right arrow key navigation (does NOT mark images seen)
+  // allow left/right arrow for navigation, F for fullscreen, D for download
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (!images.length) return
-      if (e.key === 'ArrowLeft') {
+      const key = e.key.toLowerCase()
+      if (key === 'arrowleft') {
         setCurrentIdx((i) => (i - 1 + images.length) % images.length)
         showOverlay(false)
-      }
-      if (e.key === 'ArrowRight') {
+        showControls()
+        showCursor()
+      } else if (key === 'arrowright') {
         setCurrentIdx((i) => (i + 1) % images.length)
         showOverlay(false)
+        showControls()
+        showCursor()
+      } else if (key === 'f') {
+        toggleFullScreen()
+      } else if (key === 'd') {
+        downloadCurrentImage()
       }
     }
     window.addEventListener('keydown', onKey)
@@ -219,7 +267,17 @@ export default function App() {
     : ''
 
   return (
-    <div className={`carousel ${TRANSITION_STYLES[styleIdx]}`} ref={carouselRef} onMouseMove={() => showOverlay(false)}>
+    <div
+      className={`carousel ${TRANSITION_STYLES[styleIdx]}${
+        cursorVisible ? '' : ' hide-cursor'
+      }`}
+      ref={carouselRef}
+      onMouseMove={() => {
+        showOverlay(false)
+        showControls()
+        showCursor()
+      }}
+    >
       {images.length > 0 && (
         <div className={`controls${overlayVisible ? ' visible' : ''}`}> 
           <select
