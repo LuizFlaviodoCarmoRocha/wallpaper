@@ -81,6 +81,7 @@ export default function App() {
   const [overlayVisible, setOverlayVisible] = useState(true)
   const overlayTimer = useRef<number | undefined>(undefined)
   const resetOverlayTimer = () => {
+    console.debug('[HMR DEBUG] resetOverlayTimer called')
     setOverlayVisible(true)
     if (overlayTimer.current) clearTimeout(overlayTimer.current)
     overlayTimer.current = window.setTimeout(
@@ -93,6 +94,10 @@ export default function App() {
     if (images.length === 0) return
     resetOverlayTimer()
   }, [currentIdx, images])
+
+  useEffect(() => {
+    console.debug('[HMR DEBUG] overlayVisible=', overlayVisible)
+  }, [overlayVisible])
 
   
   const carouselRef = useRef<HTMLDivElement>(null)
