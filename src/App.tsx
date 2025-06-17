@@ -207,22 +207,20 @@ export default function App() {
     <div className={`carousel ${TRANSITION_STYLES[styleIdx]}`} ref={carouselRef} onMouseMove={resetOverlayTimer}>
       {images.length > 0 && (
         <div className={`controls${overlayVisible ? ' visible' : ''}`}> 
-          <input
-            type="range"
-            className="speed-slider"
-            min={60}
-            max={600}
-            step={60}
+          <select
+            className="duration-select"
             value={rotationSec}
-            list="speed-ticks"
             onChange={(e) => setRotationSec(Number(e.target.value))}
             title={`Display duration: ${rotationSec / 60} min`}
-          />
-          <datalist id="speed-ticks">
-            {Array.from({ length: 10 }, (_, i) => (i + 1) * 60).map((sec) => (
-              <option key={sec} value={sec} />
-            ))}
-          </datalist>
+          >
+            {[15, 30, 60, 120, 180, 240, 300, 360, 420, 480, 540, 600].map(
+              (sec) => (
+                <option key={sec} value={sec}>
+                  {sec < 60 ? `${sec}s` : `${sec / 60}m`}
+                </option>
+              )
+            )}
+          </select>
           <select
             className="transition-select"
             value={

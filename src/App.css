@@ -78,12 +78,11 @@
   opacity: 1;
   pointer-events: auto;
 }
-/* uniform styling for control icons (fullscreen, download, info) */
-/* uniform styling for control icons, dropdown, and slider track */
+/* uniform styling for control icons, dropdowns */
 .controls button,
 .controls .download-btn,
 .controls .transition-select,
-.controls .speed-slider {
+.controls .duration-select {
   background: rgba(0, 0, 0, 0.7);
   color: #fff;
   border: none;
@@ -100,45 +99,10 @@
  .controls button:hover,
  .controls .download-btn:hover,
  .controls .transition-select:hover,
- .controls .speed-slider:hover {
+ .controls .duration-select:hover {
   background: rgba(0, 0, 0, 0.85);
 }
 
-/* label showing current transition style */
-.transition-label {
-  display: inline-block;
-  margin: 0 0.5rem;
-  color: #fff;
-  background: rgba(0, 0, 0, 0.5);
-  padding: 0.3rem 0.6rem;
-  border-radius: 0.3rem;
-  font-size: 0.9rem;
-  line-height: 1;
-}
-
-/* slider styling */
-.controls .speed-slider {
-  width: 6rem;
-  margin-right: 0.5rem;
-  height: 0.4rem;
-  border-radius: 0.3rem;
-  appearance: none;
-  background: rgba(0, 0, 0, 0.7);
-  cursor: pointer;
-}
-.controls .speed-slider:hover {
-  background: rgba(0, 0, 0, 0.85);
-}
-.controls .speed-slider::-webkit-slider-thumb {
-  appearance: none;
-  width: 1rem;
-  height: 1rem;
-  border-radius: 50%;
-  background: #fff;
-}
-.controls .speed-slider::-moz-range-thumb {
-  background: #fff;
-}
 
 /* --- Transition styles --- */
 .carousel.fade .carousel-image {
