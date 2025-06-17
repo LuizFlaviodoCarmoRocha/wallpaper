@@ -4,7 +4,8 @@ import './App.css'
 const API_URL = 'https://api.nasa.gov/planetary/apod'
 const API_KEY = 'DEMO_KEY'
 const IMAGE_COUNT = 50
-const ROTATION_INTERVAL_MS = 60 * 1000
+// rotationSec controls how many seconds each image is shown (slider adjustable)
+const DEFAULT_ROTATION_SEC = 60
 const FETCH_INTERVAL_MS = 20 * 60 * 1000
 const STORAGE_KEY = 'nasa-images'
 const STORAGE_TIME_KEY = 'nasa-images-timestamp'
@@ -24,6 +25,7 @@ type TransitionMode = 'sequential' | 'random' | 'manual'
 export default function App() {
   const [images, setImages] = useState<ImageData[]>([])
   const [currentIdx, setCurrentIdx] = useState(0)
+  const [rotationSec, setRotationSec] = useState(DEFAULT_ROTATION_SEC)
   const [styleIdx, setStyleIdx] = useState(0)
   const [transitionMode, setTransitionMode] = useState<TransitionMode>('sequential')
   const [manualStyle, setManualStyle] = useState<TransitionStyle>(TRANSITION_STYLES[0])
@@ -102,9 +104,9 @@ export default function App() {
         return 0
       })
     }
-    const rotateInt = setInterval(rotate, ROTATION_INTERVAL_MS)
+    const rotateInt = setInterval(rotate, rotationSec * 1000)
     return () => clearInterval(rotateInt)
-  }, [images, loadImages])
+  }, [images, loadImages, rotationSec])
 
   // when we get new images, reset the seen set
   useEffect(() => {
@@ -159,6 +161,23 @@ export default function App() {
     document.addEventListener('fullscreenchange', onChange)
     return () => document.removeEventListener('fullscreenchange', onChange)
   }, [])
+
+  // allow left/right arrow key navigation (does NOT mark images seen)
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!images.length) return
+      if (e.key === 'ArrowLeft') {
+        setCurrentIdx((i) => (i - 1 + images.length) % images.length)
+        resetOverlayTimer()
+      }
+      if (e.key === 'ArrowRight') {
+        setCurrentIdx((i) => (i + 1) % images.length)
+        resetOverlayTimer()
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [images])
 
   // download current image via blob to support cross-origin
   const downloadCurrentImage = async () => {
