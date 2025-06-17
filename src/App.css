@@ -159,6 +159,29 @@
   z-index: 4;
   min-width: 8rem;
 }
+/* multi-level submenu for compact layout */
+.menu-dropdown .menu-item.has-submenu {
+  position: relative;
+}
+.menu-dropdown .menu-item.has-submenu .submenu {
+  display: none;
+  position: absolute;
+  top: 0;
+  left: calc(100% - 0.5rem);
+  background: rgba(0, 0, 0, 0.8);
+  padding: 0.5rem;
+  border-radius: 0.3rem;
+  min-width: 8rem;
+  z-index: 1;
+}
+.menu-dropdown .menu-item.has-submenu:hover .submenu {
+  display: block;
+}
+
+/* submenu indicator arrow and top-level bolding */
+.menu-dropdown .menu-item.top-level {
+  font-weight: bold;
+}
 .menu-dropdown .menu-section {
   margin-bottom: 0.5rem;
 }

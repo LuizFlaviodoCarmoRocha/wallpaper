@@ -1,15 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import './App.css'
-
-const DownloadIcon = () => (
-  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-    <g transform="rotate(180 12 12)">
-      <path d="M5 20h14v-2H5v2zM12 2L5 9h4v6h6V9h4l-7-7z" />
-    </g>
-  </svg>
-)
-
-
 const AmbientIcon = () => (
   <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
     <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6a6 6 0 0 1-6 6c-3.31 0-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z" />
@@ -69,10 +59,10 @@ export default function App() {
     console.debug('[DEBUG] showControls')
     setControlsVisible(true)
     if (controlsTimer.current) clearTimeout(controlsTimer.current)
-    controlsTimer.current = window.setTimeout(
-      () => setControlsVisible(false),
-      MIN_INITIAL_MS
-    )
+    controlsTimer.current = window.setTimeout(() => {
+      setControlsVisible(false)
+      setMenuOpen(false)
+    }, MIN_INITIAL_MS)
   }
   const [cursorVisible, setCursorVisible] = useState(true)
   const cursorTimer = useRef<number | undefined>(undefined)
@@ -266,6 +256,23 @@ export default function App() {
     localStorage.setItem(LAST_IMAGE_KEY, images[currentIdx].date)
   }, [currentIdx, images])
 
+  // prefetch next image to detect broken links and skip them in rotation
+  useEffect(() => {
+    if (images.length === 0) return
+    const nextIdx = (currentIdx + 1) % images.length
+    const nextData = images[nextIdx]
+    const img = new Image()
+    img.src = nextData.url
+    img.onerror = () => {
+      console.warn('Failed to preload image, skipping', nextData.url)
+      seenRef.current.add(nextData.date)
+    }
+    return () => {
+      img.onload = null
+      img.onerror = null
+    }
+  }, [currentIdx, images])
+
   
   const carouselRef = useRef<HTMLDivElement>(null)
   const [isFull, setIsFull] = useState(false)
@@ -372,65 +379,76 @@ export default function App() {
       )}
       {menuOpen && (
         <div ref={menuRef} className="menu-dropdown">
-          <div className="menu-section">
-            <div className="menu-title">Duration</div>
-            {[15, 30, 60, 120, 180, 240, 300].map((sec) => (
-              <button
-                key={sec}
-                className={`menu-item${rotationSec === sec ? ' active' : ''}`}
-                onClick={() => setRotationSec(sec)}
-              >
-                {sec < 60 ? `${sec}s` : `${sec / 60}m`}
-              </button>
-            ))}
+          <button
+            className="menu-item top-level"
+            onClick={() => {
+              window.open(pageLink, '_blank')
+              setMenuOpen(false)
+            }}
+          >
+            Get Info
+          </button>
+          <button
+            className="menu-item top-level"
+            onClick={() => {
+              downloadCurrentImage()
+              setMenuOpen(false)
+            }}
+          >
+            Download
+          </button>
+          <div className="menu-item has-submenu">
+            &gt; Duration
+            <div className="submenu">
+              {[15, 30, 60, 120, 180, 240, 300].map((sec) => (
+                <button
+                  key={sec}
+                  className={`menu-item${rotationSec === sec ? ' active' : ''}`}
+                  onClick={() => {
+                    setRotationSec(sec)
+                    setMenuOpen(false)
+                  }}
+                >
+                  {sec < 60 ? `${sec}s` : `${sec / 60}m`}
+                </button>
+              ))}
+            </div>
           </div>
-          <div className="menu-section">
-            <div className="menu-title">Transition</div>
-            <button
-              className={`menu-item${transitionMode === 'sequential' ? ' active' : ''}`}
-              onClick={() => setTransitionMode('sequential')}
-            >
-              sequential
-            </button>
-            <button
-              className={`menu-item${transitionMode === 'random' ? ' active' : ''}`}
-              onClick={() => setTransitionMode('random')}
-            >
-              random
-            </button>
-            {TRANSITION_STYLES.map((s) => (
+          <div className="menu-item has-submenu">
+            &gt; Transition
+            <div className="submenu">
               <button
-                key={s}
-                className={`menu-item${transitionMode === 'manual' && manualStyle === s ? ' active' : ''}`}
+                className={`menu-item${transitionMode === 'sequential' ? ' active' : ''}`}
                 onClick={() => {
-                  setTransitionMode('manual')
-                  setManualStyle(s)
+                  setTransitionMode('sequential')
+                  setMenuOpen(false)
                 }}
               >
-                {s}
+                sequential
               </button>
-            ))}
-          </div>
-          <div className="menu-section">
-            <div className="menu-title">Actions</div>
-            <button
-              className="menu-item"
-              onClick={() => {
-                downloadCurrentImage()
-                setMenuOpen(false)
-              }}
-            >
-              Download
-            </button>
-            <button
-              className="menu-item"
-              onClick={() => {
-                window.open(pageLink, '_blank')
-                setMenuOpen(false)
-              }}
-            >
-              Get Info
-            </button>
+              <button
+                className={`menu-item${transitionMode === 'random' ? ' active' : ''}`}
+                onClick={() => {
+                  setTransitionMode('random')
+                  setMenuOpen(false)
+                }}
+              >
+                random
+              </button>
+              {TRANSITION_STYLES.map((s) => (
+                <button
+                  key={s}
+                  className={`menu-item${transitionMode === 'manual' && manualStyle === s ? ' active' : ''}`}
+                  onClick={() => {
+                    setTransitionMode('manual')
+                    setManualStyle(s)
+                    setMenuOpen(false)
+                  }}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       )}
