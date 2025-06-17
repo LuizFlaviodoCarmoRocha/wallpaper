@@ -96,5 +96,44 @@
 }
 .controls button:hover,
 .controls .download-btn:hover {
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.85);
+}
+
+/* --- Transition styles --- */
+.carousel.fade .carousel-image {
+  transition: opacity 1s ease-in-out;
+}
+
+.carousel.slide .carousel-image {
+  transition: transform 1s ease-in-out, opacity 1s ease-in-out;
+  transform: translateX(100%);
+  opacity: 0;
+}
+.carousel.slide .carousel-image.visible {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+.carousel.zoom .carousel-image {
+  transition: transform 1s ease-in-out, opacity 1s ease-in-out;
+  transform: scale(0.8);
+  opacity: 0;
+}
+.carousel.zoom .carousel-image.visible {
+  transform: scale(1);
+  opacity: 1;
+}
+
+.carousel.flip {
+  perspective: 1000px;
+}
+.carousel.flip .carousel-image {
+  backface-visibility: hidden;
+  transition: transform 0.8s ease-in-out, opacity 0.8s ease-in-out;
+  transform: rotateY(90deg);
+  opacity: 0;
+}
+.carousel.flip .carousel-image.visible {
+  transform: rotateY(0deg);
+  opacity: 1;
 }
