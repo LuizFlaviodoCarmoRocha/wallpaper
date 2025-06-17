@@ -68,7 +68,6 @@ export default function App() {
     return () => clearInterval(rotateInt)
   }, [images])
 
-  // overlay visibility on image change or user mouse movement
   const [overlayVisible, setOverlayVisible] = useState(true)
   const overlayTimer = useRef<number | undefined>(undefined)
   const resetOverlayTimer = () => {
