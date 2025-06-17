@@ -207,6 +207,16 @@ export default function App() {
     <div className={`carousel ${TRANSITION_STYLES[styleIdx]}`} ref={carouselRef} onMouseMove={resetOverlayTimer}>
       {images.length > 0 && (
         <div className={`controls${overlayVisible ? ' visible' : ''}`}> 
+          <input
+            type="range"
+            className="speed-slider"
+            min={5}
+            max={180}
+            step={5}
+            value={rotationSec}
+            onChange={(e) => setRotationSec(Number(e.target.value))}
+            title={`Display duration: ${rotationSec}s`}
+          />
           <select
             className="transition-select"
             value={
@@ -237,9 +247,6 @@ export default function App() {
           >
             ⛶
           </button>
-          <span className="transition-label" title="Current transition">
-            {TRANSITION_STYLES[styleIdx]}
-          </span>
           <button
             onClick={downloadCurrentImage}
             className="download-btn"
