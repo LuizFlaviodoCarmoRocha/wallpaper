@@ -22,6 +22,7 @@
   object-fit: contain;
   opacity: 0;
   transition: opacity 1s ease-in-out;
+  z-index: 0;
 }
 
 .carousel-image.visible {
@@ -40,6 +41,7 @@
   opacity: 0;
   transition: opacity 0.5s ease-in-out;
   pointer-events: none;
+  z-index: 1;
 }
 
 .overlay.visible {
@@ -70,6 +72,8 @@
   opacity: 0;
   transition: opacity 0.5s ease-in-out;
   pointer-events: none;
+.controls {
+  z-index: 2;
 }
 .controls.visible {
   opacity: 1;
