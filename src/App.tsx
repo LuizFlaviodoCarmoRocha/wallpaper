@@ -120,7 +120,7 @@ export default function App() {
   const [overlayVisible, setOverlayVisible] = useState(true)
   const overlayTimer = useRef<number>()
   // show overlay; if initial, duration scales to text length, else fixed
-  const showOverlay = (initial = false) => {
+  const showOverlay = (initial: boolean = false) => {
     setOverlayVisible(true)
     if (overlayTimer.current) clearTimeout(overlayTimer.current)
     let timeout = initial
