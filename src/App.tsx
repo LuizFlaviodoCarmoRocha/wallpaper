@@ -210,16 +210,16 @@ export default function App() {
           <input
             type="range"
             className="speed-slider"
-            min={5}
-            max={180}
-            step={5}
+            min={60}
+            max={600}
+            step={60}
             value={rotationSec}
             list="speed-ticks"
             onChange={(e) => setRotationSec(Number(e.target.value))}
-            title={`Display duration: ${rotationSec}s`}
+            title={`Display duration: ${rotationSec / 60} min`}
           />
           <datalist id="speed-ticks">
-            {Array.from({ length: 180 / 15 }, (_, i) => (i + 1) * 15).map((sec) => (
+            {Array.from({ length: 10 }, (_, i) => (i + 1) * 60).map((sec) => (
               <option key={sec} value={sec} />
             ))}
           </datalist>
