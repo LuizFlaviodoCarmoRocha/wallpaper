@@ -36,9 +36,7 @@ export default function App() {
             setImages(parsed)
             return
           }
-        } catch {
-          // ignore malformed cache
-        }
+        } catch {}
       }
       const res = await fetch(
         `${API_URL}?api_key=${API_KEY}&count=${IMAGE_COUNT}`
