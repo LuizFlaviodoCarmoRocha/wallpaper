@@ -4,8 +4,8 @@ import './App.css'
 const API_URL = 'https://api.nasa.gov/planetary/apod'
 const API_KEY = 'DEMO_KEY'
 const IMAGE_COUNT = 10
-const ROTATION_INTERVAL_MS = 60 * 1000 // 60 seconds
-const FETCH_INTERVAL_MS = 60 * 60 * 1000 // 60 minutes
+const ROTATION_INTERVAL_MS = 60 * 1000
+const FETCH_INTERVAL_MS = 60 * 60 * 1000
 const STORAGE_KEY = 'nasa-images'
 const STORAGE_TIME_KEY = 'nasa-images-timestamp'
 
