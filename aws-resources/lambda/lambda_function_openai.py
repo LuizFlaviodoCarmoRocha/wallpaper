@@ -7,6 +7,32 @@ import re
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
+# Allowed origins for CORS
+ALLOWED_ORIGINS = [
+    'https://wallpaper.rbios.net',
+    'https://dfag5wjhwtow6.cloudfront.net',  # CloudFront distribution
+    'http://localhost:5173',  # Vite dev server
+    'http://localhost:3000',  # Common dev server port
+]
+
+def get_cors_headers(origin=None):
+    """Get CORS headers with proper origin handling"""
+    # Check if origin is in allowed list
+    allowed_origin = '*'  # Default fallback
+    
+    if origin and origin in ALLOWED_ORIGINS:
+        allowed_origin = origin
+    elif origin and origin.startswith('http://localhost:'):
+        # Allow any localhost port for development
+        allowed_origin = origin
+    
+    return {
+        'Access-Control-Allow-Origin': allowed_origin,
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Max-Age': '86400',  # 24 hours
+    }
+
 def get_openai_api_key():
     """Retrieve OpenAI API key from AWS Secrets Manager"""
     secrets_client = boto3.client('secretsmanager', region_name='us-east-1')
@@ -164,12 +190,11 @@ def generate_mock_facts(title, count=5):
     return base_facts[:min(count, len(base_facts))]
 
 def lambda_handler(event, context):
-    # Set up CORS headers
-    headers = {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Content-Type',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS'
-    }
+    # Get origin from headers for CORS
+    origin = event.get('headers', {}).get('origin') or event.get('headers', {}).get('Origin')
+    
+    # Set up CORS headers based on origin
+    headers = get_cors_headers(origin)
     
     # Handle preflight OPTIONS request
     if event['httpMethod'] == 'OPTIONS':
@@ -204,6 +229,9 @@ def lambda_handler(event, context):
         if count_match:
             fact_count = min(int(count_match.group(1)), 10)  # Cap at 10
         
+        # Log request details (without sensitive info)
+        logger.info(f"Request from origin: {origin}, for {fact_count} facts about: {title}")
+        
         # Get OpenAI API key
         api_key = get_openai_api_key()
         
@@ -213,6 +241,7 @@ def lambda_handler(event, context):
             
             if openai_response:
                 facts = extract_facts_from_response(openai_response)
+                logger.info(f"Successfully generated {len(facts)} facts via OpenAI")
                 return {
                     'statusCode': 200,
                     'headers': headers,
