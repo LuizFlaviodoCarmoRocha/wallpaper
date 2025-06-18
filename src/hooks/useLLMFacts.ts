@@ -4,6 +4,7 @@ async function fetchFacts(title: string, explanation: string): Promise<string[]>
   const prompt = `
 Generate exactly 5 brief pop‑up style trivia captions about this NASA astronomy image titled "${title}" with the following description: "${explanation}".
 Use brevity (1‑2 sentences max), mix factual and sarcastic commentary, visual puns, insider knowledge, pop culture references, and self‑aware humor.
+Avoid using hyphens (`-`) in the pop‑up captions.
 Here are example Pop‑Up Video facts for style guidance:
 Production & Cost Details:
 - "This video cost $2.3 million to make"
@@ -81,22 +82,27 @@ export function useLLMFacts(title: string, explanation: string): string[] {
   const [facts, setFacts] = useState<string[]>([])
   
   useEffect(() => {
+    // Skip fetching until we have a valid title
+    if (!title) {
+      setFacts([])
+      return
+    }
     let cancelled = false
-    
+
     fetchFacts(title, explanation)
-      .then(facts => {
+      .then((newFacts) => {
         if (!cancelled) {
-          setFacts(facts)
+          setFacts(newFacts)
         }
       })
-      .catch(error => {
+      .catch((error) => {
         console.error('OpenAI call error:', error)
         // Fallback to a simple fact if the API call fails
         if (!cancelled) {
           setFacts([`This is a fascinating astronomical image titled "${title}".`])
         }
       })
-    
+
     return () => {
       cancelled = true
     }

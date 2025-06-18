@@ -387,7 +387,6 @@ export default function App() {
         console.debug('[Trivia] skipping initial pop-up; transition in', timeToNext, 'ms')
         return
       }
-      console.debug('[Trivia] initial pop-up at idx 0')
       setCurrentFactIdx(0)
       lastFactIdxRef.current = 0
       new Audio('/assets/pop.mp3').play().catch(() => {})

@@ -54,22 +54,24 @@ def call_openai_api(prompt, api_key):
         'Content-Type': 'application/json'
     }
     
+    # Prepare payload for OpenAI; use chat/completions by default
+    model_name = 'gpt-4.1-mini'
     data = {
-        'model': 'gpt-4.1-mini',
+        'model': model_name,
         'messages': [
-            {
-                'role': 'user',
-                'content': prompt
-            }
+            {'role': 'user', 'content': prompt}
         ],
-        'max_tokens': 500,  # Increased for more facts
+        'max_tokens': 500,
         'temperature': 0.7
     }
-    
+    # GPT-4.1-mini requires the chat/responses endpoint rather than completions
+    endpoint = 'https://api.openai.com/v1/chat/completions'
+    if model_name == 'gpt-4.1-mini':
+        endpoint = 'https://api.openai.com/v1/chat/responses'
+
     try:
         response = http.request(
-            'POST',
-            'https://api.openai.com/v1/chat/completions',
+            'POST', endpoint,
             body=json.dumps(data),
             headers=headers
         )
