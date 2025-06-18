@@ -6,7 +6,6 @@ async function fetchFacts(title: string, explanation: string): Promise<string[]>
     `Each fact should be a single sentence, scientifically accurate, and should not repeat details already mentioned in the description; instead, provide novel insights that expand upon it. ` +
     `Return only the facts as a JSON array of strings, like this: ["fact 1", "fact 2", "fact 3", "fact 4", "fact 5"]`
   
-  console.debug('[fetchFacts] calling LLM API with prompt:', prompt)
   const response = await fetch(
     import.meta.env.VITE_LLM_API_ENDPOINT || 'https://x36464naae.execute-api.us-east-1.amazonaws.com/prod/bedrock/invoke',
     {
@@ -18,14 +17,11 @@ async function fetchFacts(title: string, explanation: string): Promise<string[]>
   
   if (!response.ok) {
     const errText = await response.text()
-    console.error('[fetchFacts] API error', response.status, response.statusText, errText)
+    console.error('[fetchFacts] API error:', response.status, response.statusText, errText)
     throw new Error(`API call failed: ${response.status}`)
   }
   
   const data = await response.json()
-  console.debug('[fetchFacts] API returned facts:', data.facts)
-  
-  console.debug('[fetchFacts] raw response data:', data)
   // Try to handle facts as array or JSON string
   let arr = data.facts
   if (typeof arr === 'string') {
@@ -34,7 +30,9 @@ async function fetchFacts(title: string, explanation: string): Promise<string[]>
     } catch {}
   }
   if (Array.isArray(arr) && arr.length > 0) {
-    console.debug('[fetchFacts] parsed facts array:', arr)
+    console.group(`[fetchFacts] Retrieved ${arr.length} facts for "${title}"`)
+    arr.forEach((fact, idx) => console.log(`${idx + 1}. ${fact}`))
+    console.groupEnd()
     return arr
   }
   

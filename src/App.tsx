@@ -33,16 +33,17 @@ const IMAGE_COUNT = 50
 const DEFAULT_ROTATION_SEC = 60
 const FETCH_INTERVAL_MS = 20 * 60 * 1000
 // overlay display timing (initial based on text length vs user-activated)
-const MIN_INITIAL_MS = 5000
-const MAX_INITIAL_MS = 20000
-const MS_PER_WORD = 400
+// shorter display durations in development for faster iteration
+const MIN_INITIAL_MS = import.meta.env.DEV ? 2000 : 5000
+const MAX_INITIAL_MS = import.meta.env.DEV ? 8000 : 20000
+const MS_PER_WORD    = import.meta.env.DEV ? 200  : 400
 
 // trivia pop-up delays (ms)
-// shorter delays in development mode
-const TRIVIA_START_DELAY_MIN_MS = import.meta.env.DEV ? 1500 : 3000
-const TRIVIA_START_DELAY_MAX_MS = import.meta.env.DEV ? 3000 : 8000
-const TRIVIA_ROTATION_DELAY_MIN_MS = import.meta.env.DEV ? 3000 : 13000
-const TRIVIA_ROTATION_DELAY_MAX_MS = import.meta.env.DEV ? 6000 : 27000
+// longer delays in development to avoid overlapping pop-ups
+const TRIVIA_START_DELAY_MIN_MS = import.meta.env.DEV ? 3000 : 3000
+const TRIVIA_START_DELAY_MAX_MS = import.meta.env.DEV ? 6000 : 8000
+const TRIVIA_ROTATION_DELAY_MIN_MS = import.meta.env.DEV ? 6000 : 13000
+const TRIVIA_ROTATION_DELAY_MAX_MS = import.meta.env.DEV ? 12000 : 27000
 const STORAGE_KEY = 'nasa-images'
 const STORAGE_TIME_KEY = 'nasa-images-timestamp'
 const LAST_IMAGE_KEY = 'nasa-last-image-date'
@@ -382,12 +383,11 @@ export default function App() {
         const rnd =
           Math.random() * (TRIVIA_ROTATION_DELAY_MAX_MS - TRIVIA_ROTATION_DELAY_MIN_MS) +
           TRIVIA_ROTATION_DELAY_MIN_MS
-        console.debug('[Trivia] scheduling rotation timeout ms', rnd)
+        console.debug('[Trivia] scheduling rotation timeout ms', Math.round(rnd))
         const t = window.setTimeout(() => {
           const prevIdx = lastFactIdxRef.current
           console.debug('[Trivia] rotate callback previous idx', prevIdx)
           const next = (prevIdx + 1) % facts.length
-          console.debug('[Trivia] computed next idx', next)
           lastFactIdxRef.current = next
           setCurrentFactIdx(next)
           new Audio('/assets/pop.mp3').play().catch(() => {})

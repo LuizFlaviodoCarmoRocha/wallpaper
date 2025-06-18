@@ -9,14 +9,17 @@ interface FactBubbleProps {
 /**
  * Displays a floating fact bubble at a random position and auto-dismisses after a timeout.
  */
+const DISPLAY_DURATION_MS = import.meta.env.DEV ? 3000 : 5000
+const EXIT_DURATION_MS = 1000
+
 export default function FactBubble({ fact, onDone }: FactBubbleProps) {
   const [exiting, setExiting] = useState(false)
   useEffect(() => {
     let hideTimer: number
     const timer = window.setTimeout(() => {
       setExiting(true)
-      hideTimer = window.setTimeout(() => onDone?.(), 1000)
-    }, 5000)
+      hideTimer = window.setTimeout(() => onDone?.(), EXIT_DURATION_MS)
+    }, DISPLAY_DURATION_MS)
     return () => {
       clearTimeout(timer)
       clearTimeout(hideTimer)
