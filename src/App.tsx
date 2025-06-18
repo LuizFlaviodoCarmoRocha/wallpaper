@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import './App.css'
+import FactBubble from './FactBubble'
+import { useLLMFacts } from './hooks/useLLMFacts'
 const AmbientIcon = () => (
   <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
     <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6a6 6 0 0 1-6 6c-3.31 0-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z" />
@@ -18,6 +20,12 @@ const FullscreenIcon = () => (
   </svg>
 )
 
+const LightBulbIcon = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path d="M9 21h6v-1.5H9V21zm3-19C8.13 2 5 5.13 5 9c0 3.08 1.64 5.64 4 6.8V20h2v-4.2c2.36-1.16 4-3.72 4-6.8 0-3.87-3.13-7-7-7z" />
+  </svg>
+)
+
 const API_URL = 'https://api.nasa.gov/planetary/apod'
 const API_KEY = 'DEMO_KEY'
 const IMAGE_COUNT = 50
@@ -28,6 +36,13 @@ const FETCH_INTERVAL_MS = 20 * 60 * 1000
 const MIN_INITIAL_MS = 5000
 const MAX_INITIAL_MS = 20000
 const MS_PER_WORD = 400
+
+// trivia pop-up delays (ms)
+// shorter delays in development mode
+const TRIVIA_START_DELAY_MIN_MS = import.meta.env.DEV ? 1500 : 3000
+const TRIVIA_START_DELAY_MAX_MS = import.meta.env.DEV ? 3000 : 8000
+const TRIVIA_ROTATION_DELAY_MIN_MS = import.meta.env.DEV ? 3000 : 13000
+const TRIVIA_ROTATION_DELAY_MAX_MS = import.meta.env.DEV ? 6000 : 27000
 const STORAGE_KEY = 'nasa-images'
 const STORAGE_TIME_KEY = 'nasa-images-timestamp'
 const LAST_IMAGE_KEY = 'nasa-last-image-date'
@@ -79,15 +94,18 @@ export default function App() {
   // experimental ambient movement (toggle via button or 'M' key)
   const [ambientMovement, setAmbientMovement] = useState(true)
   const toggleAmbient = () => setAmbientMovement((v) => !v)
+  // pop-up trivia toggle (light bulb icon)
+  const [popUpEnabled, setPopUpEnabled] = useState(true)
+  const togglePopUp = () => setPopUpEnabled((v) => !v)
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key.toLowerCase() === 'm') {
-        toggleAmbient()
-      }
+      const key = e.key.toLowerCase()
+      if (key === 'm') toggleAmbient()
+      else if (key === 'p') togglePopUp()
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-}, [])
+}, [toggleAmbient, togglePopUp])
 
   // hamburger menu open/close (alternate controls)
   const [menuOpen, setMenuOpen] = useState(false)
@@ -334,6 +352,64 @@ export default function App() {
     }
   }
 
+  // Pop‑Up Video: fetch and cycle trivia facts for the current image
+  const facts = useLLMFacts(
+    images[currentIdx]?.title || '',
+    images[currentIdx]?.explanation || ''
+  )
+  const [currentFactIdx, setCurrentFactIdx] = useState<number>(-1)
+  const lastFactIdxRef = useRef<number>(-1)
+  const popUpTimeoutsRef = useRef<number[]>([])
+
+  // schedule pop-up trivia after overlay hides for this image (shortcut key P)
+  useEffect(() => {
+    if (!popUpEnabled || facts.length === 0 || overlayVisible) return
+    console.debug(
+      '[Trivia] scheduling pop-ups for image',
+      currentIdx,
+      { popUpEnabled, overlayVisible, factsLength: facts.length }
+    )
+    // reset state for new image
+    setCurrentFactIdx(-1)
+    lastFactIdxRef.current = -1
+
+    const startDelay =
+      Math.random() * (TRIVIA_START_DELAY_MAX_MS - TRIVIA_START_DELAY_MIN_MS) +
+      TRIVIA_START_DELAY_MIN_MS
+    const startTimer = window.setTimeout(() => {
+      console.debug('[Trivia] initial pop-up at idx 0')
+      setCurrentFactIdx(0)
+      lastFactIdxRef.current = 0
+      new Audio('/assets/pop.mp3').play().catch(() => {})
+
+      function scheduleNext() {
+        const rnd =
+          Math.random() * (TRIVIA_ROTATION_DELAY_MAX_MS - TRIVIA_ROTATION_DELAY_MIN_MS) +
+          TRIVIA_ROTATION_DELAY_MIN_MS
+        console.debug('[Trivia] scheduling rotation timeout ms', rnd)
+        const t = window.setTimeout(() => {
+          const prevIdx = lastFactIdxRef.current
+          console.debug('[Trivia] rotate callback previous idx', prevIdx)
+          const next = (prevIdx + 1) % facts.length
+          console.debug('[Trivia] computed next idx', next)
+          lastFactIdxRef.current = next
+          setCurrentFactIdx(next)
+          new Audio('/assets/pop.mp3').play().catch(() => {})
+          scheduleNext()
+        }, rnd)
+        popUpTimeoutsRef.current.push(t)
+      }
+
+      scheduleNext()
+    }, startDelay)
+    popUpTimeoutsRef.current.push(startTimer)
+    return () => {
+      popUpTimeoutsRef.current.forEach(clearTimeout)
+      popUpTimeoutsRef.current = []
+    }
+  }, [overlayVisible, facts, popUpEnabled, currentIdx])
+
+
   const pageLink = images[currentIdx]
     ? `https://apod.nasa.gov/apod/ap${images[currentIdx].date.replace(/-/g, '').slice(2)}.html`
     : ''
@@ -350,6 +426,12 @@ export default function App() {
         showCursor()
       }}
     >
+{popUpEnabled && currentFactIdx >= 0 && facts[currentFactIdx] && (
+        <FactBubble
+          fact={facts[currentFactIdx]}
+          onDone={() => setCurrentFactIdx(-1)}
+        />
+      )}
       {images.length > 0 && (
         <div className={`controls${controlsVisible ? ' visible' : ''}`}> 
           <button
@@ -362,6 +444,13 @@ export default function App() {
           </button>
           <div className="right-controls">
             <button
+              onClick={togglePopUp}
+              className={`download-btn trivia-btn${popUpEnabled ? ' active' : ''}`}
+              title={`Pop‑Up Trivia: ${popUpEnabled ? 'On' : 'Off'} (P)`}
+            >
+              <LightBulbIcon />
+            </button>
+            <button
               onClick={toggleAmbient}
               className={`download-btn ambient-btn${ambientMovement ? ' active' : ''}`}
               title={`Ambient movement: ${ambientMovement ? 'On' : 'Off'} (M)`}
@@ -370,7 +459,8 @@ export default function App() {
             </button>
             <button
               onClick={toggleFullScreen}
-              title={isFull ? 'Exit full screen' : 'Full screen'}
+              className={`download-btn full-screen-btn${isFull ? ' active' : ''}`}
+              title={`Full screen: ${isFull ? 'On' : 'Off'} (F)`}
             >
               <FullscreenIcon />
             </button>

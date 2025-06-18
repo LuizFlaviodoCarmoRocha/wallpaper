@@ -148,6 +148,81 @@ aws cloudfront create-invalidation --distribution-id E3T87UCNP843YL --paths "/*"
 - **Caching**: Intelligent caching strategies
 - **Fast Refresh**: Development hot-reloading
 
+## Pop‑Up Video Trivia
+
+As you browse the APOD carousel, this optional feature will periodically pop up fun facts about each image—just like the classic VH1 Pop‑Up Video.
+
+### How it works
+
+- On each image display, we prompt your configured LLM (e.g. OpenAI Chat API) to generate exactly 5 trivia facts about the title/explanation. In development mode, pop-up delays are still sped up, but now by a factor of three for easier iterative testing.
+- Trivia bubbles appear every ~25 seconds at random positions over the image, with a little “pop” animation and sound effect.
+- Facts are cached per image to avoid repeated API calls during the same session.
+
+**Note:** In development mode, pop-up delays are greatly reduced for easier testing and debugging.
+
+### Getting started
+
+1. **Add your LLM credentials** (e.g. set `OPENAI_API_KEY` in your environment).
+2. **Implement the LLM endpoint** at `/api/llm` (see `src/hooks/useLLMFacts.tsx` stub).
+3. **Provide a `pop.mp3` sound** in `src/assets/pop.mp3`—this is played when a trivia bubble appears.
+4. **Enable or disable** the feature via the menu toggle once in the UI.
+
+See the source code in `src/FactBubble.tsx` and `src/hooks/useLLMFacts.tsx` for implementation details.
+
+---
+### Optional: Direct Amazon Bedrock Integration (no server code)
+
+When you’re ready to replace mock trivia with real LLM facts, you can invoke Bedrock directly from the browser via AWS SigV4 and Cognito:
+
+1. **Set up Cognito**: Create a User Pool + Identity Pool and configure your React app (e.g. via AWS Amplify).
+2. **Grant Permissions**: Allow your Identity Pool role to call `bedrock:InvokeModel`.
+3. **Add env vars** to `.env`:
+   ```ini
+   VITE_AWS_REGION=us-east-1
+   VITE_BEDROCK_IDENTITY_POOL_ID=us-east-1:xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+   VITE_BEDROCK_MODEL_ID=anthropic.claude-3
+   ```
+4. **Install AWS SDK**:
+   ```bash
+   npm install @aws-sdk/client-bedrock @aws-sdk/credential-provider-cognito-identity
+   ```
+5. **Swap in** this Bedrock hook in `src/hooks/useLLMFacts.ts` (see code sample above).
+
+---
+### Alternative: API Gateway Service‑Proxy to Amazon Bedrock
+If SDK constraints prevent a direct client call, configure API Gateway to proxy requests to Bedrock without any Lambda:
+
+1. **Create** an HTTP API in API Gateway.
+2. **Add** an AWS service integration:
+   - Integration type: AWS Service
+   - AWS service: `bedrock`
+   - HTTP method: `POST`
+   - Action: `InvokeModel`
+   - Execution role: IAM role with `bedrock:InvokeModel` permission assumed by API Gateway
+3. **Define** a route `/bedrock/invoke` (POST) using that integration.
+4. **Enable** CORS so your React app can call the endpoint.
+
+Then in your React app call the HTTP API directly:
+```ts
+async function fetchFacts(prompt: string) {
+  const res = await fetch('https://<api-id>.execute-api.<region>.amazonaws.com/prod/bedrock/invoke', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      modelId: import.meta.env.VITE_BEDROCK_MODEL_ID,
+      modelInvocationBody: JSON.stringify({ prompt }),
+    }),
+  });
+  const json = await res.json();
+  return json.facts;
+}
+```
+
+This approach requires no client‐side SDK upgrade and still leaves your front end free of custom server code.
+
+Now your client will query Bedrock directly—no server code required.
+---
+
 ## Monitoring & Maintenance
 
 - **Deployment Status**: Monitor via GitHub Actions tab
