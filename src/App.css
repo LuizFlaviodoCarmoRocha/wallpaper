@@ -1,3 +1,9 @@
+.controls .full-screen-btn.active {
+  color: #ffeb3b;
+}
+.controls .full-screen-btn.active:hover {
+  color: #fff176;
+}
 #root, body, html {
   margin: 0;
   padding: 0;
@@ -219,6 +225,14 @@
   color: #fff176;
 }
 
+/* pop-up trivia toggle active state: lightbulb highlight */
+.controls .trivia-btn.active {
+  color: #ffeb3b;
+}
+.controls .trivia-btn.active:hover {
+  color: #fff176;
+}
+
 
 /* --- Transition styles --- */
 .carousel.fade .carousel-image {
@@ -262,6 +276,44 @@
 /* experimental ambient pan/zoom movement */
 .carousel.ambient .carousel-image.visible {
   animation: ambient-pan 18.75s ease-in-out infinite alternate;
+}
+
+/* Pop-up video bubble styling */
+.fact-bubble {
+  position: absolute;
+  /* dark, semi-transparent background with accent border */
+  /* more transparent background so underlying image shows through */
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  min-width: 200px;
+  color: #fff;
+  padding: 1rem 2rem;
+  border-radius: 2rem;
+  width: 30%;
+  /* oval bubble with centered text */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  animation: fact-pop 0.3s ease-out;
+  z-index: 5;
+  font-size: 1.2rem;
+  line-height: 1.3;
+  font-weight: bold;
+  /* fun text style */
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+@keyframes fact-pop {
+  from { transform: scale(0.5); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+
+@keyframes fact-fade-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+.fact-bubble.exiting {
+  animation: fact-fade-out 2s ease-in-out forwards;
 }
 
 @keyframes ambient-pan {
