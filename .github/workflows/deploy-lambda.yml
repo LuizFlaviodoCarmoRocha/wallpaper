@@ -12,14 +12,57 @@ on:
     paths:
       - 'aws-resources/lambda/**'
     branches: [ main ]
+    # Only run if this is NOT part of a larger deployment
+    # (prevents duplicate runs when main workflow handles both)
 
 env:
   AWS_REGION: us-east-1
   LAMBDA_FUNCTION_NAME: bedrock-proxy
 
 jobs:
-  deploy-lambda:
+  check-deployment-scope:
     runs-on: ubuntu-latest
+    outputs:
+      should_deploy: ${{ steps.check.outputs.should_deploy }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 2
+        
+    - name: Check if this is a Lambda-only change
+      id: check
+      run: |
+        # Get files changed in this push
+        CHANGED_FILES=$(git diff --name-only HEAD^ HEAD)
+        echo "Changed files:"
+        echo "$CHANGED_FILES"
+        
+        # Check if ONLY Lambda files changed (and not other parts of the app)
+        LAMBDA_CHANGES=$(echo "$CHANGED_FILES" | grep -c "^aws-resources/lambda/" || echo "0")
+        TOTAL_CHANGES=$(echo "$CHANGED_FILES" | wc -l)
+        
+        echo "Lambda changes: $LAMBDA_CHANGES"
+        echo "Total changes: $TOTAL_CHANGES"
+        
+        # Only deploy Lambda separately if:
+        # 1. This is a manual trigger OR
+        # 2. ONLY Lambda files changed (no frontend/workflow changes)
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          echo "Manual trigger - deploying Lambda"
+          echo "should_deploy=true" >> $GITHUB_OUTPUT
+        elif [ "$LAMBDA_CHANGES" -gt 0 ] && [ "$TOTAL_CHANGES" -eq "$LAMBDA_CHANGES" ]; then
+          echo "Lambda-only changes detected - deploying"
+          echo "should_deploy=true" >> $GITHUB_OUTPUT
+        else
+          echo "Mixed changes detected - main workflow will handle deployment"
+          echo "should_deploy=false" >> $GITHUB_OUTPUT
+        fi
+
+  deploy-lambda:
+    needs: check-deployment-scope
+    runs-on: ubuntu-latest
+    if: needs.check-deployment-scope.outputs.should_deploy == 'true'
     
     steps:
     - name: Checkout code
@@ -122,6 +165,7 @@ jobs:
         rm test-payload-*.json response-*.json
         
     - name: Summary
+      if: needs.check-deployment-scope.outputs.should_deploy == 'true'
       run: |
         echo "📋 Deployment Summary"
         echo "===================="
@@ -135,3 +179,15 @@ jobs:
           echo "🎉 Lambda function deployment completed successfully!"
           echo "The trivia feature should now be updated with the latest changes."
         fi
+        
+  skip-deployment:
+    needs: check-deployment-scope  
+    runs-on: ubuntu-latest
+    if: needs.check-deployment-scope.outputs.should_deploy == 'false'
+    
+    steps:
+    - name: Skip Deployment
+      run: |
+        echo "⏭️ Skipping Lambda-only deployment"
+        echo "📝 Mixed changes detected - main deployment workflow will handle both frontend and Lambda"
+        echo "🔗 Check the 'Deploy to S3 and Lambda' workflow for complete deployment status"
