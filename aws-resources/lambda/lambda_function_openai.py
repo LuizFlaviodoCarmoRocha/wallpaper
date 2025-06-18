@@ -55,7 +55,7 @@ def call_openai_api(prompt, api_key):
     }
     
     data = {
-        'model': 'gpt-3.5-turbo',
+        'model': 'gpt-4.1-mini',
         'messages': [
             {
                 'role': 'user',

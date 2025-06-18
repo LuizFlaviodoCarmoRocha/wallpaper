@@ -44,6 +44,8 @@ const TRIVIA_START_DELAY_MIN_MS = import.meta.env.DEV ? 3000 : 3000
 const TRIVIA_START_DELAY_MAX_MS = import.meta.env.DEV ? 6000 : 8000
 const TRIVIA_ROTATION_DELAY_MIN_MS = import.meta.env.DEV ? 6000 : 13000
 const TRIVIA_ROTATION_DELAY_MAX_MS = import.meta.env.DEV ? 12000 : 27000
+// skip pop-up if image transition occurs within next 10s
+const POPUP_TRANSITION_GAP_MS = 10000
 const STORAGE_KEY = 'nasa-images'
 const STORAGE_TIME_KEY = 'nasa-images-timestamp'
 const LAST_IMAGE_KEY = 'nasa-last-image-date'
@@ -350,23 +352,28 @@ export default function App() {
   }
 
   // Pop‑Up Video: fetch and cycle trivia facts for the current image
+  const currentImage = images[currentIdx]
+  const descWithDate = currentImage
+    ? `${currentImage.explanation} (Image posted on ${currentImage.date})`
+    : ''
   const facts = useLLMFacts(
-    images[currentIdx]?.title || '',
-    images[currentIdx]?.explanation || ''
+    currentImage?.title || '',
+    descWithDate
   )
   const [currentFactIdx, setCurrentFactIdx] = useState<number>(-1)
   const lastFactIdxRef = useRef<number>(-1)
   const popUpTimeoutsRef = useRef<number[]>([])
+  const lastImageChangeMsRef = useRef<number>(Date.now())
 
   // schedule pop-up trivia after overlay hides for this image (shortcut key P)
   useEffect(() => {
     if (!popUpEnabled || facts.length === 0 || overlayVisible) return
+    lastImageChangeMsRef.current = Date.now()
     console.debug(
       '[Trivia] scheduling pop-ups for image',
       currentIdx,
       { popUpEnabled, overlayVisible, factsLength: facts.length }
     )
-    // reset state for new image
     setCurrentFactIdx(-1)
     lastFactIdxRef.current = -1
 
@@ -374,6 +381,12 @@ export default function App() {
       Math.random() * (TRIVIA_START_DELAY_MAX_MS - TRIVIA_START_DELAY_MIN_MS) +
       TRIVIA_START_DELAY_MIN_MS
     const startTimer = window.setTimeout(() => {
+      const elapsed = Date.now() - lastImageChangeMsRef.current
+      const timeToNext = rotationSec * 1000 - elapsed
+      if (timeToNext < POPUP_TRANSITION_GAP_MS) {
+        console.debug('[Trivia] skipping initial pop-up; transition in', timeToNext, 'ms')
+        return
+      }
       console.debug('[Trivia] initial pop-up at idx 0')
       setCurrentFactIdx(0)
       lastFactIdxRef.current = 0
@@ -385,8 +398,13 @@ export default function App() {
           TRIVIA_ROTATION_DELAY_MIN_MS
         console.debug('[Trivia] scheduling rotation timeout ms', Math.round(rnd))
         const t = window.setTimeout(() => {
+          const elapsedInner = Date.now() - lastImageChangeMsRef.current
+          const timeLeft = rotationSec * 1000 - elapsedInner
+          if (timeLeft < POPUP_TRANSITION_GAP_MS) {
+            console.debug('[Trivia] skipping next pop-up; transition in', timeLeft, 'ms')
+            return
+          }
           const prevIdx = lastFactIdxRef.current
-          console.debug('[Trivia] rotate callback previous idx', prevIdx)
           const next = (prevIdx + 1) % facts.length
           lastFactIdxRef.current = next
           setCurrentFactIdx(next)
@@ -403,7 +421,7 @@ export default function App() {
       popUpTimeoutsRef.current.forEach(clearTimeout)
       popUpTimeoutsRef.current = []
     }
-  }, [overlayVisible, facts, popUpEnabled, currentIdx])
+  }, [overlayVisible, facts, popUpEnabled, currentIdx, rotationSec])
 
 
   const pageLink = images[currentIdx]
