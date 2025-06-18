@@ -2,10 +2,11 @@ import { useState, useEffect } from 'react'
 
 async function fetchFacts(title: string, explanation: string): Promise<string[]> {
   const prompt = `
-Generate exactly 5 brief pop‑up style trivia captions about this NASA astronomy image titled "${title}" with the following description: "${explanation}".
-Use brevity (1‑2 sentences max), mix factual and sarcastic commentary, visual puns, insider knowledge, pop culture references, and self‑aware humor.
-Avoid using hyphens (`-`) in the pop‑up captions.
-Here are example Pop‑Up Video facts for style guidance:
+Generate exactly 8 brief pop-up style trivia captions about this NASA astronomy image titled "${title}" with the following description: "${explanation}". Aim for one fact from each of the example categories below, plus one additional fact of your choice.
+Use brevity (1-2 sentences max), mix factual and sarcastic commentary, visual puns, insider knowledge, pop culture references, and self-aware humor.
+Do not include any hyphens (single '-' or double '--') anywhere in your output. Replace any hyphens you would normally use with a period.
+Minimize overly cheesy punchlines; keep facts informative while allowing subtle, light humor.
+Here are example Pop-Up Video facts for style guidance:
 Production & Cost Details:
 - "This video cost $2.3 million to make"
 - "The director shot 47 takes of this scene"
@@ -41,17 +42,25 @@ Snarky Commentary:
 - "Subtle as a brick through a window"
 - "This pose took 6 hours to perfect"
 
-Return only the facts as a JSON array of strings, like ["fact 1", "fact 2", "fact 3", "fact 4", "fact 5"].
+Return only the facts as a JSON array of strings, like ["fact 1", "fact 2", "fact 3", "fact 4", "fact 5", "fact 6", "fact 7", "fact 8"].
 `
   
-  const response = await fetch(
-    import.meta.env.VITE_LLM_API_ENDPOINT || 'https://x36464naae.execute-api.us-east-1.amazonaws.com/prod/bedrock/invoke',
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt }),
-    }
+  // Ensure we have a string prompt and log the full payload and endpoint
+  const endpoint =
+    import.meta.env.VITE_LLM_API_ENDPOINT ||
+    'https://x36464naae.execute-api.us-east-1.amazonaws.com/prod/bedrock/invoke'
+  const safePrompt = prompt || ''
+  console.debug(
+    '[fetchFacts] endpoint →',
+    endpoint,
+    'payload →',
+    JSON.stringify({ prompt: safePrompt })
   )
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prompt: safePrompt }),
+  })
   
   if (!response.ok) {
     const errText = await response.text()
@@ -68,10 +77,11 @@ Return only the facts as a JSON array of strings, like ["fact 1", "fact 2", "fac
     } catch {}
   }
   if (Array.isArray(arr) && arr.length > 0) {
-    console.group(`[fetchFacts] Retrieved ${arr.length} facts for "${title}"`)
-    arr.forEach((fact, idx) => console.log(`${idx + 1}. ${fact}`))
+    const sanitized = arr.map(fact => fact.replace(/-{1,2}/g, '.'))
+    console.group(`[fetchFacts] Retrieved ${sanitized.length} facts for "${title}"`)
+    sanitized.forEach((fact, idx) => console.log(`${idx + 1}. ${fact}`))
     console.groupEnd()
-    return arr
+    return sanitized
   }
   
   // Fallback

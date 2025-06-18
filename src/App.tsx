@@ -205,7 +205,7 @@ export default function App() {
     }
     const rotateInt = setInterval(rotate, rotationSec * 1000)
     return () => clearInterval(rotateInt)
-  }, [images, loadImages, rotationSec])
+  }, [images, loadImages, rotationSec, currentIdx])
 
   // when we get new images, reset the seen set
   useEffect(() => {
