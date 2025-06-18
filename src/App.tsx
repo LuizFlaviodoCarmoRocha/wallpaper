@@ -71,7 +71,6 @@ export default function App() {
   const [controlsVisible, setControlsVisible] = useState(false)
   const controlsTimer = useRef<number | undefined>(undefined)
   const showControls = () => {
-    console.debug('[DEBUG] showControls')
     setControlsVisible(true)
     if (controlsTimer.current) clearTimeout(controlsTimer.current)
     controlsTimer.current = window.setTimeout(() => {
@@ -82,11 +81,9 @@ export default function App() {
   const [cursorVisible, setCursorVisible] = useState(true)
   const cursorTimer = useRef<number | undefined>(undefined)
   const showCursor = () => {
-    console.debug('[DEBUG] showCursor called')
     setCursorVisible(true)
     if (cursorTimer.current) clearTimeout(cursorTimer.current)
     cursorTimer.current = window.setTimeout(() => {
-      console.debug('[DEBUG] hideCursor timeout')
       setCursorVisible(false)
     }, 3000)
   }
@@ -231,7 +228,6 @@ export default function App() {
   const overlayTimer = useRef<number | undefined>(undefined)
   // show overlay; if initial, duration scales to text length, else fixed
   const showOverlay = (initial: boolean = false) => {
-    console.debug('[DEBUG] showOverlay', { initial })
     setOverlayVisible(true)
     if (overlayTimer.current) clearTimeout(overlayTimer.current)
     let timeout = initial
